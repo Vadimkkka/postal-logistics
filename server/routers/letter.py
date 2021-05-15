@@ -19,13 +19,13 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_description="List all letters", response_model=List[Letter], tags=["read", "list"])
+@router.get("/", response_description="List all letters", response_model=List[Letter])
 async def list_letters():
     letters = await mail_db['letter'].find().to_list(100)
     return letters
 
 
-@router.post("/", response_description="Add new letter", response_model=Letter, tags=["create"])
+@router.post("/", response_description="Add new letter", response_model=Letter)
 async def create_letter(letter: Letter = Body(...)):
     letter = jsonable_encoder(letter)
     # qrcode = create_qrcode(letter['_id'], letter['_id'])
@@ -37,14 +37,14 @@ async def create_letter(letter: Letter = Body(...)):
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_letter)
 
 
-@router.get("/{letter_id}", response_description="Get a single letter", response_model=Letter, tags=["read", "list"])
+@router.get("/{letter_id}", response_description="Get a single letter", response_model=Letter)
 async def read_letter(letter_id: str):
     if (letter := await mail_db["letter"].find_one({"_id": letter_id})) is not None:
         return letter
     raise HTTPException(status_code=404, detail=f"Letter {id} not found")
 
 
-@router.put("/{letter_id}", response_description="Update a letter", response_model=Letter, tags=["update"])
+@router.put("/{letter_id}", response_description="Update a letter", response_model=Letter)
 async def update_letter(letter_id: str, letter: UpdateLetter = Body(...)):
     letter = {k: v for k, v in letter.dict().items() if v is not None}
 
@@ -63,7 +63,7 @@ async def update_letter(letter_id: str, letter: UpdateLetter = Body(...)):
     raise HTTPException(status_code=404, detail=f"Letter {id} not found")
 
 
-@router.delete("/{letter_id}", response_description="Delete a letter", tags=["delete"])
+@router.delete("/{letter_id}", response_description="Delete a letter")
 async def delete_letter(letter_id: str):
     delete_result = await mail_db["letter"].delete_one({"_id": letter_id})
 
@@ -73,7 +73,7 @@ async def delete_letter(letter_id: str):
     raise HTTPException(status_code=404, detail=f"Letter {id} not found")
 
 
-@router.delete("/", response_description="Delete all letters", tags=["delete", "list"])
+@router.delete("/", response_description="Delete all letters")
 async def drop_letters():
     delete_result = await mail_db["letter"].drop()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

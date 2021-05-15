@@ -1,60 +1,49 @@
-from typing import Optional
+from datetime import timedelta
 
-from fastapi import Depends, APIRouter, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, Body, status, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
+
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
+
+from dependencies import mail_db
+from models.user import User, NewUser
+
+from auth import authenticate_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_current_active_user, get_password_hash
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
-    responses={ 404: {"description": "Not found user"} },
+    responses={404: {"description": "Not found user"}},
 )
 
 
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
-
-
-def fake_decode_token(token):
-    # This doesn't provide any security at all
-    user = get_user(fake_users_db, token)
-    return user
-
-
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    user = fake_decode_token(token)
+@router.post("/sign-in")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = await authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return user
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
-async def get_current_active_user(current_user: User = Depends(get_current_user)):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-
-
-@router.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user_dict = fake_users_db.get(form_data.username)
-    if not user_dict:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    user = UserInDB(**user_dict)
-    hashed_password = fake_hash_password(form_data.password)
-    if not hashed_password == user.hashed_password:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-
-    return {"access_token": user.username, "token_type": "bearer"}
-
-
-@router.get("/users/me")
+@router.get("/me")
 async def read_users_me(current_user: User = Depends(get_current_active_user)):
     return current_user
+
+
+@router.post("/sign-up")
+async def create_user(user: NewUser = Body(...)):
+    user = jsonable_encoder(user)
+    user['hashed_password'] = get_password_hash(user.pop('password', None))
+    new_user = await mail_db["user"].insert_one(user)
+    created_user = await mail_db["user"].find_one({"_id": new_user.inserted_id})
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_user)

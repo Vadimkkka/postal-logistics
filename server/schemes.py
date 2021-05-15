@@ -18,3 +18,24 @@ letter_schema = {
         "express": True
     }
 }
+
+user_schema = {
+    "example": {
+        "username": "johndoe",
+        "full_name": "John Doe",
+        "role": "admin",
+        "disabled": False,        
+    }
+}
+
+
+new_user_schema = {
+    "example": {
+        "username": "johndoe",
+        "password": "aloe",
+        "full_name": "John Doe",
+        "role": "admin",
+        "disabled": False,        
+    }
+
+}
