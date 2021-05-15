@@ -1,0 +1,20 @@
+letter_schema = {
+    "example": {
+        "recipient": { 
+            "first": "Leonardo", 
+            "last": "DiCaprio",
+            "middle": "Wilhelm" 
+        },
+        "address": {
+            "country": "USA",
+            "city": "Los Angeles",
+            "district": "Downtown ",
+            "street": "E 8th", 
+            "house_number": "208",
+            "postcode": "90014"
+        },
+        "track": True,
+        "status": "Pending",
+        "express": True
+    }
+}
