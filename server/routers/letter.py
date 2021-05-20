@@ -8,6 +8,9 @@ from models.letter import Letter, UpdateLetter
 
 from dependencies import mail_db
 
+from models.user import User, Role
+from auth import get_current_active_user
+
 # from io import StringIO
 # from bson.binary import Binary
 # import base64
@@ -20,13 +23,15 @@ router = APIRouter(
 
 
 @router.get("/", response_description="List all letters", response_model=List[Letter])
-async def list_letters():
+async def list_letters(current_user: User = Depends(get_current_active_user)):
     letters = await mail_db['letter'].find().to_list(100)
     return letters
 
 
 @router.post("/", response_description="Add new letter", response_model=Letter)
-async def create_letter(letter: Letter = Body(...)):
+async def create_letter(letter: Letter = Body(...), current_user: User = Depends(get_current_active_user)):
+    if current_user.role == Role.user:
+       raise HTTPException(status_code=401, detail=f"Not enough rights") 
     letter = jsonable_encoder(letter)
     # qrcode = create_qrcode(letter['_id'], letter['_id'])
     # with open("./postbox_qrcode.png", "rb") as f:
@@ -64,7 +69,9 @@ async def update_letter(letter_id: str, letter: UpdateLetter = Body(...)):
 
 
 @router.delete("/{letter_id}", response_description="Delete a letter")
-async def delete_letter(letter_id: str):
+async def delete_letter(letter_id: str, current_user: User = Depends(get_current_active_user)):
+    if current_user.role == Role.user:
+       raise HTTPException(status_code=401, detail=f"Not enough rights") 
     delete_result = await mail_db["letter"].delete_one({"_id": letter_id})
 
     if delete_result.deleted_count == 1:

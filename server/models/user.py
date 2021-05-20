@@ -9,17 +9,17 @@ from schemes import user_schema, new_user_schema
 
 
 class Role(str, Enum):
-    user = "user"
     expert = "expert"
     admin = "admin"
+    user = "user"
 
 
 class User(BaseModel):
     user_id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     username: str
-    full_name: Optional[str] = None
-    role: Role
-    disabled: Optional[bool] = None
+    full_name: str
+    role: Optional[Role] = Role.user
+    disabled: Optional[bool] = False
 
     class Config:
         allow_population_by_field_name = True

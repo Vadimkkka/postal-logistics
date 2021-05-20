@@ -51,9 +51,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 async def authenticate_user(username: str, password: str):
     user_data = await mail_db['user'].find_one({ 'username': username  })
-    user = UserInDB(**user_data)
-    if not user:
+    if not user_data:
         return False
+    user = UserInDB(**user_data)
     if not verify_password(password, user.hashed_password):
         return False
     return user
@@ -84,4 +84,3 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
-

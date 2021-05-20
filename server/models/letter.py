@@ -34,9 +34,9 @@ class Letter(BaseModel):
     letter_id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     recipient: Recipient
     address: Address
-    track: bool
-    status: Optional[Status] = None
-    express: bool
+    track: bool = False
+    status: Optional[Status] = Status.pending
+    express: bool = False
 
     class Config:
         allow_population_by_field_name = True
