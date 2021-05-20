@@ -12,6 +12,7 @@ from prettytable import PrettyTable
 
 from PyInquirer import prompt
 from questions.letter import q_address, q_recipient, q_create 
+from questions.paired_comparisons import q_paired_comparisons
 
 
 class MyPrompt(Cmd):
@@ -44,6 +45,15 @@ class MyPrompt(Cmd):
         print(self.user)
     def help_my_user_info(self):
         print('Вывод информации о текущем пользователе')
+
+    def do_paired_comparisons(self, inp):
+        result = prompt(q_paired_comparisons) 
+        args = [result[x] == '1' for x in result]
+        c = args.count(True)
+        w = (c / len(args)) * 100
+        print("\n\tРезультат парного сравнений:\n\tC = {0}\n\tW = {1:.2f}%\n".format(c, w))
+    def help_paired_comparisons(self):
+        print('Метод парных сравнений')
 
     def do_show_letters(self, inp):
         params = parse_flags(inp)
